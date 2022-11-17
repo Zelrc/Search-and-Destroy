@@ -46,14 +46,18 @@ public class Shooter : MonoBehaviour
             {
                 destination = ray.GetPoint(1000);
             }
-            InstancaiteProjectile();
+            InstanciateProjectile();
         }
     }
 
-    void InstancaiteProjectile()
+    void InstanciateProjectile()
     {
         GameObject projectile = Instantiate(bullet, shootPos.position, shootPos.rotation);
-        projectile.GetComponent<Rigidbody>().velocity = (destination - shootPos.position).normalized * bulletSpeed;
+
+        projectile.GetComponent<TrackingBullets>().shootPos = shootPos;
+        projectile.GetComponent<TrackingBullets>().destination = destination;
+        //projectile.GetComponent<Rigidbody>().velocity = (destination - shootPos.position).normalized * bulletSpeed;
+
     }
 
     private void OnGUI()
