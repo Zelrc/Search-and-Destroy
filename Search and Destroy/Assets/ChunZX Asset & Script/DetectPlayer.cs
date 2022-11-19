@@ -7,7 +7,7 @@ public class DetectPlayer : MonoBehaviour
     [SerializeField] private Material original;
     [SerializeField] private Material detected;
 
-    
+    [SerializeField] private Turret inRange;
 
     Renderer rend;
 
@@ -22,7 +22,7 @@ public class DetectPlayer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Turret.inRange)
+        if(inRange.GetComponent<Turret>().inRange)
         {
             rend.sharedMaterial = detected;
         }

@@ -9,14 +9,14 @@ public class Turret : MonoBehaviour
 
     [SerializeField] private GameObject bullet;
 
-    public static bool inRange = false;
+    public bool inRange = false;
 
     int index = 0;
 
     private void Start()
     {
-        target = GameObject.Find("Player").transform;
-        Invoke("SpawnMissle", 2f);
+        target = GameObject.FindGameObjectWithTag("Player").transform;
+        Invoke("SpawnMissle", 1.5f);
     }
 
     //private void Update()
@@ -47,7 +47,7 @@ public class Turret : MonoBehaviour
             }
 
         }
-        Invoke("SpawnMissle", 2f);
+        Invoke("SpawnMissle", 1.5f);
     }
 
     private void OnTriggerEnter(Collider other)
