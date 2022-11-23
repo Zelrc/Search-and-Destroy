@@ -29,6 +29,7 @@ public class AIPatrolling : MonoBehaviour
     float targetDist;
     public float sizeRadius;
     [SerializeField] GameObject exclamationMark;
+    [SerializeField] bool isFound;
 
     //Waypoints
     [SerializeField] Transform targetPath;
@@ -39,11 +40,11 @@ public class AIPatrolling : MonoBehaviour
     [SerializeField] Transform targetObstacles = null;
     public bool isObstacle = false;
     [SerializeField] List<GameObject> obstacles = new List<GameObject>();
-                
-    bool playerInRange;
-    [SerializeField] bool isFound;         
-    bool isPatroling;
-    bool isChasing;
+
+    //Damage player
+    float timer = 1;
+
+    Animator animator;     
 
     void Start()
     {
@@ -51,6 +52,8 @@ public class AIPatrolling : MonoBehaviour
         accelerationRate = maxSpeed / accelerationTimeToMax;
 
         enemyHealth = maxHealth;
+
+        animator = GetComponent<Animator>();
     }
 
     void Update()
@@ -82,7 +85,7 @@ public class AIPatrolling : MonoBehaviour
             if (targetObstacles != null)
             {
                 currentDir = rb.velocity.normalized;
-                Debug.Log(currentDir);
+                //  Debug.Log(currentDir);
             }
 
             SteeringMovement();
@@ -179,6 +182,11 @@ public class AIPatrolling : MonoBehaviour
             obstacles.Add(other.gameObject);
             isObstacle = true;
         }
+        else if (other.CompareTag("Player"))
+        {
+            animator.SetBool("isAttacking", true);
+            StartCoroutine("countdownAttack");
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -188,11 +196,34 @@ public class AIPatrolling : MonoBehaviour
             isObstacle = false;
             obstacles.Clear();
         }
+        else if (other.CompareTag("Player"))
+        {
+            animator.SetBool("isAttacking", false);
+            StopCoroutine("countdownAttack");
+        }
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, sizeRadius);
+    }
+
+    IEnumerator countdownAttack()
+    {
+        timer = 3;
+
+        while (true)
+        {
+            timer -= 1 * Time.deltaTime;
+
+            if (timer <= 0)
+            {
+                Debug.Log("Attack");
+                timer = 3;
+            }
+
+            yield return null;
+        }
     }
 }
