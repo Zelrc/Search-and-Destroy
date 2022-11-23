@@ -184,7 +184,7 @@ public class AIPatrollingNavMesh : MonoBehaviour
     void EnviromentView()
     {
         Collider[] playerInRange = Physics.OverlapSphere(transform.position, viewRadius, playerMask);   
-
+       
         for (int i = 0; i < playerInRange.Length; i++)
         {
             Transform player = playerInRange[i].transform;
