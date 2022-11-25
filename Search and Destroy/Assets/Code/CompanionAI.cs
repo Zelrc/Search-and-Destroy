@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -28,6 +28,9 @@ public class CompanionAI : MonoBehaviour
     [Tooltip("Bot maximum rotate speed")]
     public int maxRotateSpeed = 4;
 
+    [Tooltip("The maximum time for bot to reach max Speed")]
+    public float timeToReachMaxSpeed = 2f;
+
     [Tooltip("Bot steering force")]
     public float steerForce = 1f;
 
@@ -37,8 +40,17 @@ public class CompanionAI : MonoBehaviour
     [Tooltip("Time for bot to heal the player again")]
     public int healCoolDownTime = 10;
 
-    [Tooltip("The maximum time for bot to reach max Speed")]
-    public float timeToReachMaxSpeed = 2f;
+    [Tooltip("The Bot Detect Range with the enemy")]
+    public float detectRange = 5f;
+
+    [Tooltip("Enemy in which layer to detect")]
+    public LayerMask detectLayer;
+
+    [Tooltip("The Bot damage towards the target")]
+    public float botDamage = 10f;
+
+    [Tooltip("Time for Bot to do next attack")]
+    public int attackCoolDownTime = 5;
 
     [SerializeField] GameObject _playerGameObject;
     private CharacterStatus _characterStatus;
@@ -46,6 +58,9 @@ public class CompanionAI : MonoBehaviour
 
     private bool _healOnCoolDown = false;
     private float _healTimer;
+
+    private bool _attackOnCoolDown = false;
+    private float _attackTimer;
 
     private float _distance;
 
@@ -84,7 +99,7 @@ public class CompanionAI : MonoBehaviour
     }
 
     private void MoveTowardsToPlayer()
-    { 
+    {
         // Calculate the distance between bot and target
         _distanceBetweenBotAndPlayer =
             new Vector3
@@ -114,24 +129,39 @@ public class CompanionAI : MonoBehaviour
         // Calculate the resultant Vector3
         _steeringForward = _distanceBetweenBotAndPlayer - _botCurrentDirection;
 
+        // Move the bot towards to the player
         _botBody.velocity = (currentSpeed * _botCurrentDirection) + (_steeringForward * steerForce);
 
     }
-    
+
     private void HealPlayer()
     {
         _characterStatus._currentHeath += _characterStatus.maxHealth * 30 / 100;
     }
-    
+
     private void ShootEnemy()
     {
+        Collider[] physicsDetector = Physics.OverlapSphere(transform.position, detectRange, detectLayer, QueryTriggerInteraction.Ignore);
+        foreach (Collider enemy in physicsDetector)
+        {
+            if(enemy.CompareTag("Enemy"))
+            {
+                Vector3 _distancebetweenBotandEnemy = enemy.transform.position - transform.position;
+                CharacterStatus enemyStatus = enemy.GetComponent<CharacterStatus>();
+                // Need to code cooldown and rapid check
+                // Need to check which enemy has the lowest health/closest, make the bot fly over
+                // attack it when it's not on cooldown
+                
+                enemyStatus.TakeDamage(botDamage);
+            }
+        }
 
     }
 
     private void BotLogic()
     {
         // If Bot see enemy, it need to get close to the enemy and shoot the enemy
-        
+        // Piority will be when player HP is low, it will fly over to heal
         if (!_healOnCoolDown)
         {
             if (_characterStatus._currentHeath <= _characterStatus._currentHeath * 10 / 100)
@@ -147,7 +177,10 @@ public class CompanionAI : MonoBehaviour
                 }
 
             }
-        }    
+        }
+
+        // Then if the player HP is not low, it will continue onward here
+        ShootEnemy();
     }
 
     private void DistanceBetween()

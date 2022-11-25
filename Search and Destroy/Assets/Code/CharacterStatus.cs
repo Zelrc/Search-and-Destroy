@@ -31,6 +31,11 @@ public class CharacterStatus : MonoBehaviour
         OnDeath();
     }
 
+    public void TakeDamage(float _damage)
+    {
+        _currentHeath -= _damage;
+    }
+
     private void OnDeath()
     {
         if (_currentHeath <= 0)
