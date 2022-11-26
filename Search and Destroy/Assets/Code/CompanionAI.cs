@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -42,15 +43,21 @@ public class CompanionAI : MonoBehaviour
 
     [Tooltip("The Bot Detect Range with the enemy")]
     public float detectRange = 5f;
-
     [Tooltip("Enemy in which layer to detect")]
     public LayerMask detectLayer;
 
     [Tooltip("The Bot damage towards the target")]
     public float botDamage = 10f;
-
     [Tooltip("Time for Bot to do next attack")]
     public int attackCoolDownTime = 5;
+
+    [Tooltip("Bullet Prefab")]
+    public GameObject bulletPrefab;
+    [Tooltip("Maximum bullet per shooting")]
+    public int maxBullet = 50;
+
+    [Tooltip("Bot's Target Transform")]
+    [SerializeField] Transform _target;
 
     [SerializeField] GameObject _playerGameObject;
     private CharacterStatus _characterStatus;
@@ -61,11 +68,12 @@ public class CompanionAI : MonoBehaviour
 
     private bool _attackOnCoolDown = false;
     private float _attackTimer;
+    [SerializeField] private int _bulletCount = 0;
 
-    private float _distance;
+    [SerializeField] private float _distance;
 
     private Vector3 _aroundThePlayer;
-    private Vector3 _distanceBetweenBotAndPlayer;
+    private Vector3 _distanceBetweenBotAndTarget;
     private Vector3 _botCurrentDirection;
     private Vector3 _steeringForward;
 
@@ -96,22 +104,34 @@ public class CompanionAI : MonoBehaviour
             _healTimer = healCoolDownTime;
             _healOnCoolDown = false;
         }
+
+        if (_attackOnCoolDown)
+        {
+            _attackTimer -= Time.deltaTime;
+        }
+
+        if (_attackTimer <= 0)
+        {
+            _attackTimer = attackCoolDownTime;
+            _attackOnCoolDown = false;
+            _bulletCount = 0;
+        }
     }
 
-    private void MoveTowardsToPlayer()
+    private void MoveTowardsToTarget()
     {
         // Calculate the distance between bot and target
-        _distanceBetweenBotAndPlayer =
+        _distanceBetweenBotAndTarget =
             new Vector3
-            (_playerGameObject.transform.position.x - transform.position.x,
+            (_target.position.x - transform.position.x,
             0,
-            _playerGameObject.transform.position.z - transform.position.z).normalized;
+            _target.position.z - transform.position.z).normalized;
 
         // Make the bot stay on top of player
-        _distanceBetweenBotAndPlayer.y = _playerGameObject.transform.position.y + 4f;
+        _distanceBetweenBotAndTarget.y = 0;
 
         // Calculate the bot towards the target
-        _botCurrentDirection = Vector3.RotateTowards(transform.forward, _distanceBetweenBotAndPlayer, rotateSpeed * Time.deltaTime * 0.2f, 0.0f);
+        _botCurrentDirection = Vector3.RotateTowards(transform.forward, _distanceBetweenBotAndTarget, rotateSpeed * Time.deltaTime * 0.2f, 0.0f);
 
         // Make Bot look at the target
         transform.rotation = Quaternion.LookRotation(_botCurrentDirection);
@@ -127,7 +147,7 @@ public class CompanionAI : MonoBehaviour
             rotateSpeed = maxRotateSpeed;
 
         // Calculate the resultant Vector3
-        _steeringForward = _distanceBetweenBotAndPlayer - _botCurrentDirection;
+        _steeringForward = _distanceBetweenBotAndTarget - _botCurrentDirection;
 
         // Move the bot towards to the player
         _botBody.velocity = (currentSpeed * _botCurrentDirection) + (_steeringForward * steerForce);
@@ -141,26 +161,60 @@ public class CompanionAI : MonoBehaviour
 
     private void ShootEnemy()
     {
+        Transform nearestEnemy = null;
         Collider[] physicsDetector = Physics.OverlapSphere(transform.position, detectRange, detectLayer, QueryTriggerInteraction.Ignore);
-        foreach (Collider enemy in physicsDetector)
+        float minimumDistance = Mathf.Infinity;
+        foreach (Collider enemyCollider in physicsDetector)
         {
-            if(enemy.CompareTag("Enemy"))
+            if (enemyCollider.gameObject.CompareTag("enemy"))
             {
-                Vector3 _distancebetweenBotandEnemy = enemy.transform.position - transform.position;
-                CharacterStatus enemyStatus = enemy.GetComponent<CharacterStatus>();
-                // Need to code cooldown and rapid check
-                // Need to check which enemy has the lowest health/closest, make the bot fly over
-                // attack it when it's not on cooldown
-                
-                enemyStatus.TakeDamage(botDamage);
+                Vector3 botVector = new Vector3(transform.position.x, 0, transform.position.z);
+                Vector3 enemyVector = new Vector3(enemyCollider.transform.position.x, 0, enemyCollider.transform.position.z);
+                float distanceBetweenBotAndEnemies = Vector3.Distance(botVector, enemyVector);
+                // The Bot will go to another enemy and another if it keep detect new enemy, while attacking one enemy
+                // In order to avoid that, normally I would limit a distance between bot and player
+                // But the another fix is, when the bot has no attack left will return to the player.
+                // I will continue develop this part if needed, if else, will focus on bulleting and stuff first
+                if (distanceBetweenBotAndEnemies < minimumDistance)
+                {
+                    minimumDistance = distanceBetweenBotAndEnemies;
+                    nearestEnemy = enemyCollider.transform;
+                    if (distanceBetweenBotAndEnemies <= 2f && _bulletCount < maxBullet)
+                    {
+
+                        // Shoot the enemy limited time
+                        Instantiate(bulletPrefab, transform.position, Quaternion.LookRotation(_botCurrentDirection));
+                        _bulletCount++;
+                        if (_bulletCount >= maxBullet)
+                        {
+                            _attackOnCoolDown = true;
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("Moving to the target enemy");
+                        _target = nearestEnemy;
+                        MoveTowardsToTarget();
+                    }
+                }
             }
+        }
+
+        if (nearestEnemy != null)
+        {
+            Debug.Log("The nearest enemy is" + nearestEnemy.gameObject.name);
+        }
+        else
+        {
+            _target = _playerGameObject.transform;
+            MoveTowardsToTarget();
+            Debug.Log("There is no enemy found, so target set to player");
         }
 
     }
 
     private void BotLogic()
     {
-        // If Bot see enemy, it need to get close to the enemy and shoot the enemy
         // Piority will be when player HP is low, it will fly over to heal
         if (!_healOnCoolDown)
         {
@@ -169,22 +223,36 @@ public class CompanionAI : MonoBehaviour
                 // We need the bot move towards to the player before he could heal the player
                 if (_distance >= 4f)
                 {
-                    MoveTowardsToPlayer();
+                    _target = gameObject.transform;
+                    MoveTowardsToTarget();
                 }
                 else
                 {
                     HealPlayer();
                 }
-
             }
         }
 
-        // Then if the player HP is not low, it will continue onward here
-        ShootEnemy();
+        // Then if the player HP is not low, it will continue onward here, move towards to the enemy if Attack is not on cooldown
+        // If attack on cooldown, it will go back to the player
+        if (!_attackOnCoolDown)
+        {
+            ShootEnemy();
+        }
+        else
+        {
+            _target = _playerGameObject.transform;
+            MoveTowardsToTarget();
+        }
     }
 
     private void DistanceBetween()
     {
         _distance = Vector3.Distance(transform.position, _playerGameObject.transform.position);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawSphere(transform.position, detectRange);        
     }
 }
