@@ -1,9 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class CompanionAI : MonoBehaviour
 {
@@ -55,9 +50,11 @@ public class CompanionAI : MonoBehaviour
     public GameObject bulletPrefab;
     [Tooltip("Maximum bullet per shooting")]
     public int maxBullet = 50;
+    [Tooltip("Bullet Spawn Point")]
+    public Transform bulletSpawnPoint;
 
     [Tooltip("Bot's Target Transform")]
-    [SerializeField] Transform _target;
+    public Transform _target;
 
     [SerializeField] GameObject _playerGameObject;
     private CharacterStatus _characterStatus;
@@ -72,7 +69,6 @@ public class CompanionAI : MonoBehaviour
 
     [SerializeField] private float _distance;
 
-    private Vector3 _aroundThePlayer;
     private Vector3 _distanceBetweenBotAndTarget;
     private Vector3 _botCurrentDirection;
     private Vector3 _steeringForward;
@@ -168,8 +164,8 @@ public class CompanionAI : MonoBehaviour
         {
             if (enemyCollider.gameObject.CompareTag("enemy"))
             {
-                Vector3 botVector = new Vector3(transform.position.x, 0, transform.position.z);
-                Vector3 enemyVector = new Vector3(enemyCollider.transform.position.x, 0, enemyCollider.transform.position.z);
+                Vector3 botVector = new(transform.position.x, 0, transform.position.z);
+                Vector3 enemyVector = new(enemyCollider.transform.position.x, 0, enemyCollider.transform.position.z);
                 float distanceBetweenBotAndEnemies = Vector3.Distance(botVector, enemyVector);
                 // The Bot will go to another enemy and another if it keep detect new enemy, while attacking one enemy
                 // In order to avoid that, normally I would limit a distance between bot and player
@@ -181,9 +177,10 @@ public class CompanionAI : MonoBehaviour
                     nearestEnemy = enemyCollider.transform;
                     if (distanceBetweenBotAndEnemies <= 2f && _bulletCount < maxBullet)
                     {
-
                         // Shoot the enemy limited time
-                        Instantiate(bulletPrefab, transform.position, Quaternion.LookRotation(_botCurrentDirection));
+                        _target = nearestEnemy;
+                        // Quaternion.LookRotation(_botCurrentDirection)
+                        Instantiate(bulletPrefab, bulletSpawnPoint.position, Quaternion.identity).GetComponent<BulletScript>()._target = nearestEnemy;
                         _bulletCount++;
                         if (_bulletCount >= maxBullet)
                         {
@@ -253,6 +250,7 @@ public class CompanionAI : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.DrawSphere(transform.position, detectRange);        
+        Gizmos.color = new Color(1.0f, 0.0f, 0.0f, 0.3f);
+        Gizmos.DrawSphere(transform.position, detectRange);
     }
 }
