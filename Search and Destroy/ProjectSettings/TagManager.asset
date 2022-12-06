@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - enemy
+  - Bullet
+  - Bot
   layers:
   - Default
   - TransparentFX
@@ -13,9 +15,9 @@ TagManager:
   - Water
   - UI
   - enemy
-  - 
-  - 
-  - 
+  - Homing Bullet
+  - Player
+  - Obstacles
   - 
   - 
   - 
