@@ -11,6 +11,8 @@ public class Shooter : MonoBehaviour
     public float bulletSpeed = 20f;
     public GameObject bullet;
 
+    bool tracking = false;
+
     public Transform shootPos;
     public float fireRate = 0.5f;
     public float nextFire = 0.0f;
@@ -48,14 +50,32 @@ public class Shooter : MonoBehaviour
             }
             InstanciateProjectile();
         }
+
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            tracking = false;
+        }
+        else if(Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            tracking = true;
+        }
     }
 
     void InstanciateProjectile()
     {
         GameObject projectile = Instantiate(bullet, shootPos.position, shootPos.rotation);
 
-        projectile.GetComponent<TrackingBullets>().shootPos = shootPos;
-        projectile.GetComponent<TrackingBullets>().destination = destination;
+        if(tracking)
+        {
+            projectile.GetComponent<TrackingBullets>().shootPos = shootPos;
+            projectile.GetComponent<TrackingBullets>().destination = destination;
+        }
+        else
+        {
+            projectile.GetComponent<Rigidbody>().velocity = (destination - shootPos.position).normalized * bulletSpeed;
+            projectile.GetComponent<TrackingBullets>().enabled = false;
+        }
+        
         //projectile.GetComponent<Rigidbody>().velocity = (destination - shootPos.position).normalized * bulletSpeed;
 
     }
