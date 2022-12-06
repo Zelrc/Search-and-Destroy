@@ -43,6 +43,7 @@ public class AIPatrolling : MonoBehaviour
 
     //Damage player
     float timer = 1;
+    PlayerHealth playerHealth;
 
     Animator animator;     
 
@@ -52,6 +53,8 @@ public class AIPatrolling : MonoBehaviour
         accelerationRate = maxSpeed / accelerationTimeToMax;
 
         enemyHealth = maxHealth;
+
+        playerHealth = targetPlayer.GetComponent<PlayerHealth>();
 
         animator = GetComponent<Animator>();
     }
@@ -99,15 +102,21 @@ public class AIPatrolling : MonoBehaviour
 
     void Chasing()
     {
-        targetPos = targetPlayer.position;
-        targetDir = (targetPos - transform.position).normalized;
+        if (targetPlayer != null)
+        {
+            targetPos = targetPlayer.position;
+            targetDir = (targetPos - transform.position).normalized;
 
-        exclamationMark.SetActive(true);
+            exclamationMark.SetActive(true);
+        }
     }
 
     void Patrolling()
     {
-        targetDist = (transform.position - targetPlayer.position).magnitude;
+        if (targetPlayer != null)
+        {
+            targetDist = (transform.position - targetPlayer.position).magnitude;
+        }
 
         if (pathPoints != null)
         {
@@ -219,6 +228,7 @@ public class AIPatrolling : MonoBehaviour
 
             if (timer <= 0)
             {
+                playerHealth.health -= 1;
                 Debug.Log("Attack");
                 timer = 3;
             }

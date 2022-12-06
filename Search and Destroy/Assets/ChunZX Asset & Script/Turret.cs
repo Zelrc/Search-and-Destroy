@@ -33,21 +33,24 @@ public class Turret : MonoBehaviour
 
     void SpawnMissle()
     {
-        if (inRange)
+        if (target != null)
         {
-            GameObject NewBullet = Instantiate(bullet, spawnPoint[index].position, spawnPoint[index].rotation);
-
-            if (index < spawnPoint.Length)
+            if (inRange)
             {
-                index++;
-            }
-            if (index == 3)
-            {
-                index = 0;
-            }
+                GameObject NewBullet = Instantiate(bullet, spawnPoint[index].position, spawnPoint[index].rotation);
 
+                if (index < spawnPoint.Length)
+                {
+                    index++;
+                }
+                if (index == 3)
+                {
+                    index = 0;
+                }
+
+            }
+            Invoke("SpawnMissle", 1.5f);
         }
-        Invoke("SpawnMissle", 1.5f);
     }
 
     private void OnTriggerEnter(Collider other)

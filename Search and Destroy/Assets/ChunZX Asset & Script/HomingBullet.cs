@@ -10,10 +10,13 @@ public class HomingBullet : MonoBehaviour
     [SerializeField] private float speed = 20;
     [SerializeField] private float rotationSpeed = 5;
 
+    PlayerHealth playerHealth;
+
     // Start is called before the first frame update
     void Start()
     {
         target = GameObject.FindGameObjectWithTag("Player").transform;
+        playerHealth = target.GetComponent<PlayerHealth>();
     }
 
     // Update is called once per frame
@@ -37,6 +40,7 @@ public class HomingBullet : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             Destroy(gameObject);
+            playerHealth.health -= 1;
         }
     }
 
