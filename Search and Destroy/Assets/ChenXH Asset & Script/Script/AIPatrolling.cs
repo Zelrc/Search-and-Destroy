@@ -98,6 +98,8 @@ public class AIPatrolling : MonoBehaviour
             Debug.DrawRay(transform.position, steeringDir * 3, Color.yellow);
             //Debug.Log(rb.velocity.magnitude);
         }
+
+        Physics.IgnoreLayerCollision(6, 10);
     }
 
     void Chasing()

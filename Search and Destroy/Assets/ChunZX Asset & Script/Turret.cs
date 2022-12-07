@@ -16,7 +16,7 @@ public class Turret : MonoBehaviour
     private void Start()
     {
         target = GameObject.FindGameObjectWithTag("Player").transform;
-        Invoke("SpawnMissle", 1.5f);
+        Invoke("SpawnMissle", 2.5f);
     }
 
     //private void Update()
