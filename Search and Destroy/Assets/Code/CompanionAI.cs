@@ -17,18 +17,18 @@ public class CompanionAI : MonoBehaviour
     [Tooltip("Bot current speed")]
     public float currentSpeed;
     [Tooltip("Bot current rotation speed")]
-    public float rotateSpeed = 3f;
+    public float rotateSpeed = 4f;
 
     [Tooltip("Bot maximum speed")]
-    public int maxSpeed = 8;
+    public int maxSpeed = 12;
     [Tooltip("Bot maximum rotate speed")]
-    public int maxRotateSpeed = 4;
+    public int maxRotateSpeed = 6;
 
     [Tooltip("The maximum time for bot to reach max Speed")]
-    public float timeToReachMaxSpeed = 2f;
+    public float timeToReachMaxSpeed = 1f;
 
     [Tooltip("Bot steering force")]
-    public float steerForce = 1f;
+    public float steerForce = 2f;
 
     [Tooltip("Bot radius wander around the player")]
     public float aroundPlayerRadius = 3f;
@@ -37,19 +37,19 @@ public class CompanionAI : MonoBehaviour
     public int healCoolDownTime = 10;
 
     [Tooltip("The Bot Detect Range with the enemy")]
-    public float detectRange = 5f;
+    public float detectRange = 8f;
     [Tooltip("Enemy in which layer to detect")]
     public LayerMask detectLayer;
 
     [Tooltip("The Bot damage towards the target")]
-    public float botDamage = 10f;
+    public int botDamage = 10;
     [Tooltip("Time for Bot to do next attack")]
     public int attackCoolDownTime = 5;
 
     [Tooltip("Bullet Prefab")]
     public GameObject bulletPrefab;
     [Tooltip("Maximum bullet per shooting")]
-    public int maxBullet = 50;
+    public int maxBullet = 5;
     [Tooltip("Bullet Spawn Point")]
     public Transform bulletSpawnPoint;
 
@@ -57,7 +57,7 @@ public class CompanionAI : MonoBehaviour
     public Transform _target;
 
     [SerializeField] GameObject _playerGameObject;
-    private CharacterStatus _characterStatus;
+    private PlayerHealth _playerHealth;
     private Rigidbody _botBody;
 
     private bool _healOnCoolDown = false;
@@ -69,6 +69,9 @@ public class CompanionAI : MonoBehaviour
 
     [SerializeField] private float _distance;
 
+    private int _tempMaxspeed;
+    private int _tempMaxRotateSpeed;
+
     private Vector3 _distanceBetweenBotAndTarget;
     private Vector3 _botCurrentDirection;
     private Vector3 _steeringForward;
@@ -77,12 +80,23 @@ public class CompanionAI : MonoBehaviour
     private void Awake()
     {
         _playerGameObject = GameObject.FindWithTag("Player");
-        _characterStatus = _playerGameObject.GetComponent<CharacterStatus>();
+        _playerHealth = _playerGameObject.GetComponent<PlayerHealth>();
         _botBody = GetComponent<Rigidbody>();
+        _tempMaxspeed = maxSpeed;
+        _tempMaxRotateSpeed = maxRotateSpeed;
+    }
+
+    private void Start()
+    {
+        _target = _playerGameObject.transform;
     }
 
     private void Update()
     {
+        if (_target == null)
+        {
+            _target = _playerGameObject.transform;
+        }
         AllTimer();
         DistanceBetween();
         BotLogic();
@@ -145,14 +159,40 @@ public class CompanionAI : MonoBehaviour
         // Calculate the resultant Vector3
         _steeringForward = _distanceBetweenBotAndTarget - _botCurrentDirection;
 
+        // If close to enemy, stop.
+        if (_distance <= 3f && _target != _playerGameObject.transform)
+        {
+            _botBody.velocity = Vector3.zero;
+            return;
+        }
+        // If close to player, Steer/Wander around player, but reset the maxSpeed
+        else if (_distance <= 3f)
+        {
+            maxSpeed = _tempMaxspeed;
+            maxRotateSpeed = _tempMaxRotateSpeed;
+        }
+        // If far from target, raise maxSpeed
+        else if (_distance >= 6f)
+        {
+            maxSpeed = _tempMaxspeed + 10;
+            maxRotateSpeed = _tempMaxRotateSpeed + 18;
+        }
+
         // Move the bot towards to the player
         _botBody.velocity = (currentSpeed * _botCurrentDirection) + (_steeringForward * steerForce);
+
+
 
     }
 
     private void HealPlayer()
     {
-        _characterStatus._currentHeath += _characterStatus.maxHealth * 30 / 100;
+        _playerHealth.health += _playerHealth.maxHealth * 20 / 100;
+
+        if (_playerHealth.health >= _playerHealth.maxHealth)
+        {
+            _playerHealth.health = _playerHealth.maxHealth;
+        }
     }
 
     private void ShootEnemy()
@@ -175,7 +215,7 @@ public class CompanionAI : MonoBehaviour
                 {
                     minimumDistance = distanceBetweenBotAndEnemies;
                     nearestEnemy = enemyCollider.transform;
-                    if (distanceBetweenBotAndEnemies <= 2f && _bulletCount < maxBullet)
+                    if (distanceBetweenBotAndEnemies <= 4f && _bulletCount < maxBullet)
                     {
                         // Shoot the enemy limited time
                         _target = nearestEnemy;
@@ -215,7 +255,7 @@ public class CompanionAI : MonoBehaviour
         // Piority will be when player HP is low, it will fly over to heal
         if (!_healOnCoolDown)
         {
-            if (_characterStatus._currentHeath <= _characterStatus._currentHeath * 10 / 100)
+            if (_playerHealth.health <= _playerHealth.maxHealth * 50 / 100)
             {
                 // We need the bot move towards to the player before he could heal the player
                 if (_distance >= 4f)
@@ -245,7 +285,9 @@ public class CompanionAI : MonoBehaviour
 
     private void DistanceBetween()
     {
-        _distance = Vector3.Distance(transform.position, _playerGameObject.transform.position);
+        Vector3 _transformIgnoreY = new Vector3(transform.position.x, 0, transform.position.z);
+        Vector3 _targetIgnoreY = new Vector3(_target.position.x, 0, _target.position.z);
+        _distance = Vector3.Distance(_transformIgnoreY, _targetIgnoreY);
     }
 
     private void OnDrawGizmos()

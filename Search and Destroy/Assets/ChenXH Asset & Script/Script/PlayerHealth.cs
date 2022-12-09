@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class PlayerHealth : MonoBehaviour
 {
     public int health;
+    public int maxHealth = 5;
     [SerializeField] Text healthText;
     public bool isDead;
 
