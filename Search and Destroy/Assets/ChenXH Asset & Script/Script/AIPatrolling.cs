@@ -61,7 +61,9 @@ public class AIPatrolling : MonoBehaviour
 
     void Update()
     {
-        if(this.transform.gameObject != null)
+        OnDeath();
+
+        if (this.transform.gameObject != null)
         {
             if (isObstacle == true)
             {
@@ -236,6 +238,19 @@ public class AIPatrolling : MonoBehaviour
             }
 
             yield return null;
+        }
+    }
+
+    public void TakeDamage(int _damage)
+    {
+        enemyHealth -= _damage;
+    }
+
+    private void OnDeath()
+    {
+        if (enemyHealth <= 0)
+        {
+            Destroy(transform.parent.gameObject);
         }
     }
 }

@@ -10,7 +10,7 @@ public class BulletScript : MonoBehaviour
 
     public Transform _target;
     CompanionAI _companionAI;
-    CharacterStatus _characterStatus;
+    AIPatrolling _characterStatus;
     Rigidbody _rb;
     bool _statusFound;
 
@@ -41,7 +41,7 @@ public class BulletScript : MonoBehaviour
                 TrackTarget();
         }
         
-        Destroy(this.gameObject, 10f);
+        Destroy(this.gameObject, 5f);
     }
 
     private void TrackTarget()
@@ -75,7 +75,7 @@ public class BulletScript : MonoBehaviour
             _statusFound = other.TryGetComponent(out _characterStatus);
             if (_statusFound)
             {
-                float randomDamage = Random.Range(_companionAI.botDamage - 4, _companionAI.botDamage + 4);
+                int randomDamage = Random.Range(_companionAI.botDamage - 4, _companionAI.botDamage + 4);
                 _characterStatus.TakeDamage(randomDamage);
                 Destroy(this.gameObject);
             }
