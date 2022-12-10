@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class AIPatrolling : MonoBehaviour
 {
-    //Health
+    [Header("HEALTH")]
     [SerializeField] int enemyHealth;
     [SerializeField] int maxHealth = 100;
     [SerializeField] int getDamage = 10;
 
-    //Movement
+    [Space(25)]
+    [Header("MOVEMENT")]
     Rigidbody rb;
     [SerializeField] float maxSpeed = 5f;
     Vector3 targetPos;
@@ -24,26 +25,36 @@ public class AIPatrolling : MonoBehaviour
     Vector3 currentDir;
     [SerializeField] float steeringForce = 1f;
 
-    //Chasing
+    [Space(25)]
+    [Header("CHASING")]
     [SerializeField] Transform targetPlayer;
     float targetDist;
     public float sizeRadius;
     [SerializeField] GameObject exclamationMark;
     [SerializeField] bool isFound;
 
-    //Waypoints
+    [Space(25)]
+    [Header("WAYPOINTS")]
     [SerializeField] Transform targetPath;
     [SerializeField] Transform[] pathPoints;
     [SerializeField] int numPathPoints;
 
-    //Avoidance
+    [Space(25)]
+    [Header("AVOIDANCE")]
     [SerializeField] Transform targetObstacles = null;
     public bool isObstacle = false;
     [SerializeField] List<GameObject> obstacles = new List<GameObject>();
 
-    //Damage player
+    [Space(25)]
+    [Header("DAMAGE PLAYER")]
     float timer = 1;
     PlayerHealth playerHealth;
+
+    [Space(25)]
+    [Header("TRAP AREA")]
+    public bool isTrap;
+    [SerializeField] Transform fleeSpot;
+    public float sizeRadiusInTrap;
 
     Animator animator;     
 
@@ -72,16 +83,35 @@ public class AIPatrolling : MonoBehaviour
 
                 targetPos = targetObstacles.position;
                 targetDir = -(targetPos - transform.position).normalized;
+
+                SeekSteering();
             }
             else
             {
-                if (!isFound)
+                if (!isTrap)
                 {
-                    Patrolling();
+                    if (!isFound)
+                    {
+                        Patrolling();
+                    }
+                    else
+                    {
+                        Chasing();
+                        exclamationMark.SetActive(true);
+                    }
                 }
                 else
                 {
-                    Chasing();
+                    if (!isFound)
+                    {
+                        CheckPlayerInTrap();
+                        exclamationMark.SetActive(false);
+                    }
+                    else
+                    {
+                        Chasing();
+                        exclamationMark.SetActive(true);
+                    }
                 }
 
                 targetObstacles = null;
@@ -90,10 +120,8 @@ public class AIPatrolling : MonoBehaviour
             if (targetObstacles != null)
             {
                 currentDir = rb.velocity.normalized;
-                //  Debug.Log(currentDir);
+                //Debug.Log(currentDir);
             }
-
-            SteeringMovement();
 
             Debug.DrawRay(transform.position, transform.forward * 3, Color.green);
             Debug.DrawRay(transform.position, targetDir * 3, Color.red);
@@ -111,7 +139,7 @@ public class AIPatrolling : MonoBehaviour
             targetPos = targetPlayer.position;
             targetDir = (targetPos - transform.position).normalized;
 
-            exclamationMark.SetActive(true);
+            SeekSteering();
         }
     }
 
@@ -138,7 +166,7 @@ public class AIPatrolling : MonoBehaviour
             targetPos = pathPoints[numPathPoints].position;
             targetDir = (targetPos - transform.position).normalized;
 
-            SteeringMovement();
+            SeekSteering();
         }
 
         if (targetDist < sizeRadius)
@@ -148,7 +176,7 @@ public class AIPatrolling : MonoBehaviour
     }
 
 
-    void SteeringMovement()
+    void SeekSteering()
     {
         //targetPos = targetPlayer.position;
         //targetDir = (targetPos - transform.position).normalized;
@@ -171,6 +199,18 @@ public class AIPatrolling : MonoBehaviour
         rb.velocity = (currentSpeed * currentDir) + (steeringDir * steeringForce);
     }
 
+    void CheckPlayerInTrap()
+    {
+        if (targetPlayer != null)
+        {
+            targetPos = fleeSpot.transform.position;
+            targetDist = (transform.position - targetPlayer.position).magnitude;
+            targetDir = (targetPos - transform.position).normalized;
+        }
+
+        SeekSteering();
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if(collision.gameObject.tag == "Bullet")
@@ -181,16 +221,28 @@ public class AIPatrolling : MonoBehaviour
             Destroy(collision.gameObject);
             //Debug.Log("Destroy Bullet");
 
-            if (enemyHealth <= 0)
+            //if (enemyHealth <= 0)
+            //{
+            //    Destroy(this.gameObject);
+            //}
+        }
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("TrapArea"))
+        {
+            if (targetDist < sizeRadius)
             {
-                Destroy(this.gameObject);
+                isFound = true;
+                //Debug.Log("check in trap");
             }
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player") && !other.CompareTag("Bullet"))
+        if (!other.CompareTag("Player") && !other.CompareTag("Bullet") && !other.CompareTag("Bot") && !other.CompareTag("TrapArea"))
         {
             obstacles.Add(other.gameObject);
             isObstacle = true;
@@ -200,11 +252,25 @@ public class AIPatrolling : MonoBehaviour
             animator.SetBool("isAttacking", true);
             StartCoroutine("countdownAttack");
         }
+        if (other.gameObject.tag == "Bot")
+        {
+            isFound = true;
+        }
+        else if (isFound && !isTrap)
+        {
+            if (other.CompareTag("TrapArea"))
+            {
+                fleeSpot = other.transform;
+                sizeRadius = sizeRadiusInTrap;
+                isTrap = true;
+                isFound = false;
+            }
+        }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Player") && !other.CompareTag("Bullet"))
+        if (!other.CompareTag("Player") && !other.CompareTag("Bullet") && !other.CompareTag("Bot") && !other.CompareTag("TrapArea"))
         {
             isObstacle = false;
             obstacles.Clear();
@@ -213,6 +279,15 @@ public class AIPatrolling : MonoBehaviour
         {
             animator.SetBool("isAttacking", false);
             StopCoroutine("countdownAttack");
+        }
+        else if (isTrap)
+        {
+            if (other.CompareTag("TrapArea"))
+            {
+                targetPos = fleeSpot.transform.position;
+                exclamationMark.SetActive(false);
+                isFound = false;
+            }
         }
     }
 
@@ -233,7 +308,7 @@ public class AIPatrolling : MonoBehaviour
             if (timer <= 0)
             {
                 playerHealth.health -= 1;
-                Debug.Log("Attack");
+                //Debug.Log("Attack");
                 timer = 3;
             }
 
