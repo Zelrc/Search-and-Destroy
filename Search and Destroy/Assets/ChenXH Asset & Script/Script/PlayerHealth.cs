@@ -18,7 +18,15 @@ public class PlayerHealth : MonoBehaviour
 
     void Update()
     {
+        //healthText.text = "Health: " + health.ToString("0");
 
+        //if (health <= 0)
+        //{
+        //    health = 0;
+        //    //Destroy(gameObject);
+        //    GameManager.instance.losePanelOpen();
+        //    Debug.Log("Player dead");
+        //}
     }
 
     IEnumerator checkPlayerHP()

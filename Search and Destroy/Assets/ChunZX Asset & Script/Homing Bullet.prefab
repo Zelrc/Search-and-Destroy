@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3579263753430194441}
   m_Layer: 7
   m_Name: Homing Bullet
-  m_TagString: Bullet
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
