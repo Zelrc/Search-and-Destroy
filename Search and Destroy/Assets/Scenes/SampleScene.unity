@@ -62885,16 +62885,16 @@ MonoBehaviour:
   rotateSpeed: 4
   maxSpeed: 12
   maxRotateSpeed: 6
-  timeToReachMaxSpeed: 1
-  steerForce: 2
+  timeToReachMaxSpeed: 2
+  steerForce: 4
   aroundPlayerRadius: 3
-  healCoolDownTime: 20
+  healCoolDownTime: 5
   detectRange: 8
   detectLayer:
     serializedVersion: 2
     m_Bits: 64
   botDamage: 10
-  attackCoolDownTime: 10
+  attackCoolDownTime: 12
   bulletPrefab: {fileID: 109944500232723770, guid: d0c0e6fe20f7482418e1c62addfad15b, type: 3}
   maxBullet: 5
   bulletSpawnPoint: {fileID: 1952819621}

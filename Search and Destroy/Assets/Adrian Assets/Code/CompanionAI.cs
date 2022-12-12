@@ -61,7 +61,7 @@ public class CompanionAI : MonoBehaviour
     private Rigidbody _botBody;
 
     private bool _healOnCoolDown = false;
-    private float _healTimer;
+    private float _healTimer = 0;
 
     private bool _attackOnCoolDown = false;
     private float _attackTimer;
@@ -162,6 +162,8 @@ public class CompanionAI : MonoBehaviour
         // If close to enemy, stop.
         if (_distance <= 3f && _target != _playerGameObject.transform)
         {
+            maxSpeed = _tempMaxspeed;
+            maxRotateSpeed = _tempMaxRotateSpeed;
             _botBody.velocity = Vector3.zero;
             return;
         }
@@ -194,6 +196,8 @@ public class CompanionAI : MonoBehaviour
         }
 
         _healOnCoolDown = true;
+
+        return;
     }
 
     private void ShootEnemy()
@@ -216,7 +220,7 @@ public class CompanionAI : MonoBehaviour
                 {
                     minimumDistance = distanceBetweenBotAndEnemies;
                     nearestEnemy = enemyCollider.transform;
-                    if (distanceBetweenBotAndEnemies <= 4f && _bulletCount < maxBullet)
+                    if (distanceBetweenBotAndEnemies <= 4f)
                     {
                         // Shoot the enemy limited time
                         _target = nearestEnemy;
