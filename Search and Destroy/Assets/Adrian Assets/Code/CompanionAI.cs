@@ -182,7 +182,6 @@ public class CompanionAI : MonoBehaviour
         _botBody.velocity = (currentSpeed * _botCurrentDirection) + (_steeringForward * steerForce);
 
 
-
     }
 
     private void HealPlayer()
@@ -193,6 +192,8 @@ public class CompanionAI : MonoBehaviour
         {
             _playerHealth.health = _playerHealth.maxHealth;
         }
+
+        _healOnCoolDown = true;
     }
 
     private void ShootEnemy()

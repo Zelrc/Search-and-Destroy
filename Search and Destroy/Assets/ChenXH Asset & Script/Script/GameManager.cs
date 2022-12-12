@@ -8,6 +8,9 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     public GameObject losePanel;
+    public GameObject winPanel;
+
+    public Transform EnemyList;
 
     private void Awake()
     {
@@ -15,6 +18,19 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
         }
+    }
+
+    private void Start()
+    {
+        Time.timeScale = 1f;
+    }
+
+    private void Update()
+    {
+        if (EnemyList.childCount != 0)
+            return;
+        else
+            winPanelOpen();
     }
 
     public void losePanelOpen()
@@ -28,9 +44,18 @@ public class GameManager : MonoBehaviour
     public void resetLevel()
     {
         losePanel.SetActive(false);
-        Time.timeScale = 1f;
+        winPanel.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        Time.timeScale = 1f;
+    }
+
+    public void winPanelOpen()
+    {
+        Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        winPanel.SetActive(true);
     }
 }
